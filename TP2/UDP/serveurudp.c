@@ -90,76 +90,38 @@ int creersock( u_short port) {
 }
 
 
-int main () {
+int main (int argc, char *argv[]) {
 
   // On d?finit les variables n?c?ssaires
-  int newsockfd, s, sock;
+  int sock;
   u_short port;
   char msg [BUFSIZ];
   
-  port=P;
-
-  // On cr?e la socket
-  sock = creersock (port);
-
-  
-
-  /*
-  listen
-	permet de dimensionner la taille de la file d'attente.
-   On passe en param?tre la socket qui va ?couter, et un entier qui d?signe le nombre de connexions simultan?es autoris?es (backlog)
-  */
-  listen (sock,5);
-
-  /* La fonction accept permet d'accepter une connexion ? notre socket par un client. On passe en param?tres la socket serveur d'�coute � demi d�finie.
-  newsockfd contiendra l'identifiant de la socket de communication. newsockfd est la valeur de retour de la primitive accept. 
- C'est une socket d'?change de messages : elle est enti?rement d?finie.
- On peut pr?ciser aussi la structure et la taille de sockaddr associ?e 
-  mais ce n'est pas obligatoire et ici on a mis le pointeur NULL
-  */
-  newsockfd = accept (sock, (struct sockaddr *) 0, (unsigned int*) 0);
-
-  // Si l'accept se passe mal, on quitte le programme en affichant un message d'erreur.
-  if (newsockfd == -1) {
-    perror("Erreur accept");
-    return(-1);
-  }
+  if(argc != 2)
+    port=P;
   else
-    printf("Accept reussi");
+    port = atoi(argv[1]);
   
-  // On lit le message envoy? par la socket de communication. 
-//  msg contiendra la chaine de caract?res envoy?e par le r?seau,
-  // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-  s = read(newsockfd, msg, 1024);
-  
+  port=P; 
 
-  if (s == -1)
-    perror("Problemes");
-  else {
+  while(1)
+  {
+    // On cr?e la socket
+    sock = creersock (port);
 
-    // Si le code d'erreur est bon, on affiche le message.
-    msg[s] = 0;
-    printf("Msg: %s\n", msg);
-    printf("Recept reussie, emission msg: ");
-
-    // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
-    scanf(" %[^\n]", msg);
-    
-    // On va ?crire sur la socket, en testant le code d'erreur de la fonction write.
-    s = write(newsockfd, msg, strlen(msg));
-    if (s == -1) {
-      perror("Erreur write");
-      return(-1);
+    int n;
+    if((n = recvfrom(sock, msg, sizeof msg - 1, 0, (struct sockaddr *)0, (unsigned int*) 0)) < 0)
+    {
+        perror("recvfrom()");
+        exit(errno);
     }
-    else
-      printf("Ecriture reussie, msg: %s\n", msg);
-      
-    // On referme la socket de communication
-    close(newsockfd);
+
+    msg[n] = '\0';
+
+    printf("Msg: %s\n",msg);
+    // On referme la socket d'?coute.
+    close(sock);
   }
 
-  // On referme la socket d'?coute.
-  close(sock);
-  
   return 0;
 }
