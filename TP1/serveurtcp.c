@@ -111,7 +111,7 @@ int main () {
   */
   listen (sock,5);
 
-  /* La fonction accept permet d'accepter une connexion ? notre socket par un client. On passe en param?tres la socket serveur d'écoute à demi définie.
+  /* La fonction accept permet d'accepter une connexion ? notre socket par un client. On passe en param?tres la socket serveur d'ï¿½coute ï¿½ demi dï¿½finie.
   newsockfd contiendra l'identifiant de la socket de communication. newsockfd est la valeur de retour de la primitive accept. 
  C'est une socket d'?change de messages : elle est enti?rement d?finie.
  On peut pr?ciser aussi la structure et la taille de sockaddr associ?e 
@@ -143,7 +143,7 @@ int main () {
     printf("Recept reussie, emission msg: ");
 
     // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
-    scanf("%s", msg);
+    scanf(" %[^\n]",msg);
     
     // On va ?crire sur la socket, en testant le code d'erreur de la fonction write.
     s = write(newsockfd, msg, strlen(msg));
