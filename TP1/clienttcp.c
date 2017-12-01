@@ -15,10 +15,17 @@
 #include <errno.h>      // Fichier d'en-t�tes pour la gestion des erreurs (notamment perror()) 
 
 
-#define P 12332
+#define Port 12332
 #define LGMES 200
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    u_short port;
+
+    if(argc != 2)
+        port=Port;
+    else
+        port = atoi(argv[1]);
 
     // On d�finit les variables utilis�es dans le programme client.
     int s, sock;
@@ -62,7 +69,7 @@ int main() {
     adresse.sin_family = AF_INET;
 
     // On place le num�ro de port
-    adresse.sin_port = htons((u_short) P);
+    adresse.sin_port = htons((u_short) port);
 
     // On tente de se connecter au serveur : cette op�ration prend la place du accept que l'on a effectu� dans le programme serveur.
     if (connect(sock, (struct sockaddr *)&adresse, sizeof(adresse)) == -1) {

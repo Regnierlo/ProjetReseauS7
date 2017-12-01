@@ -90,14 +90,17 @@ int creersock( u_short port) {
 }
 
 
-int main () {
+int main (int argc, char *argv[]) {
 
   // On d?finit les variables n?c?ssaires
   int newsockfd, s, sock;
   u_short port;
   char msg [BUFSIZ];
-  
-  port=P;
+
+  if(argc != 2)
+    port=P;
+  else
+    port = atoi(argv[1]);
 
   // On cr?e la socket
   sock = creersock (port);
