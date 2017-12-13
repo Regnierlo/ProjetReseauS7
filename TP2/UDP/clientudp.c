@@ -92,6 +92,16 @@ int main(int argc, char *argv[]) {
         perror("sendto()");
         exit(errno);
     }
+
+    int n;
+    if((n = recvfrom(sock, msg, sizeof msg - 1, 0, (struct sockaddr *)0, (unsigned int*) 0)) < 0)
+    {
+        perror("recvfrom()");
+        exit(errno);
+    }
+
+    msg[n] = '\0';
+    printf("Msg: %s\n",msg);
     
     // Comme pour le serveur, on utilise write pour exp�dier le message sur le r�seau, avec message d'erreur si l'�criture se passe mal.
     /*if (write(sock, msg, strlen(msg)) == -1) {

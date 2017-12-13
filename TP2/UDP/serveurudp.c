@@ -26,7 +26,6 @@ n?c?ssaire ? l'op?ration bind().
 Cette fonction renvoie un num?ro qui permet d'identifier la socket nouvellement cr??e
 (ou la valeur -1 si l'op?ration a ?chou?e).
 */
-
 int creersock( u_short port) {
 
   // On cr?e deux variables enti?res
@@ -91,6 +90,12 @@ int creersock( u_short port) {
 
 
 int main (int argc, char *argv[]) {
+  struct hostent *hostp; /* client host info */
+  struct sockaddr_in clientaddr; /* client addr */
+  struct hostent *recup;
+  struct sockaddr_in adresse;
+  char *hostaddrp;
+
 
   // On d?finit les variables n?c?ssaires
   int sock;
@@ -104,21 +109,48 @@ int main (int argc, char *argv[]) {
   
   port=P; 
 
+
+  int n;
+  int clientlen = sizeof(clientaddr);
   while(1)
   {
     // On cr?e la socket
     sock = creersock (port);
 
-    int n;
-    if((n = recvfrom(sock, msg, sizeof msg - 1, 0, (struct sockaddr *)0, (unsigned int*) 0)) < 0)
+    
+    if((n = recvfrom(sock, msg, sizeof msg - 1, 0,
+              (struct sockaddr *) &clientaddr, clientlen)) < 0)
     {
         perror("recvfrom()");
         exit(errno);
     }
 
+    recup = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
+			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+    hostaddrp = inet_ntoa(clientaddr.sin_addr);
     msg[n] = '\0';
-
+    printf("server received datagram from %s (%s)\n", 
+	   hostp->h_name, hostaddrp);
     printf("Msg: %s\n",msg);
+
+    memcpy(msg,"Bonjour",strlen("Bonjour")+1);
+    
+
+    
+    
+    if (recup == NULL) {
+        perror("Erreur obtention adresse");
+        return(-1);
+    }
+
+    memcpy((char *)&adresse.sin_addr, (char *)recup->h_addr, recup->h_length);
+    
+
+    if(sendto(sock,msg,strlen(msg),0, (struct sockaddr *)&clientaddr, clientlen) < 0)
+    {
+      perror("sendto()");
+      exit(errno);
+    }
     // On referme la socket d'?coute.
     close(sock);
   }
