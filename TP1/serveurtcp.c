@@ -125,11 +125,11 @@ int main (int argc, char *argv[]) {
   
     // Si l'accept se passe mal, on quitte le programme en affichant un message d'erreur.
     if (newsockfd == -1) {
-      perror("Erreur accept");
+      perror("Erreur accept\n");
       return(-1);
     }
     else
-      printf("Accept reussi");
+      printf("\nAccept reussi\n");
 
     int f = fork();
     if(f == -1){
