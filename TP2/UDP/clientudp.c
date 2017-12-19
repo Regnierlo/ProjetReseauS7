@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     // Ce pointeur sur la structure hostent sera utilis� pour la recherche d'une adresse IP connaissant le nom du serveur (r�solution de noms)
     struct hostent *recup;
     
-    // On cr�e la socket cliente, de type AF_INET, qui utilisera TCP comme protocole de transport.
+    // On cr�e la socket cliente, de type AF_INET, qui utilisera UDP comme protocole de transport.
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         perror("Erreur ouverture");
