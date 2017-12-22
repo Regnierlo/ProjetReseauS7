@@ -132,28 +132,18 @@ int main (int argc, char *argv[]) {
         exit(1);
         }
         if(f == 0){
-        
-
             // On lit le message envoy? par la socket de communication. 
             //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
             // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-            
-
             if (msg == -1)
                 perror("Problemes");
             else {
-
                 // Si le code d'erreur est bon, on affiche le message.
                 msg[n] = 0;
                 printf("Msg: %s\n", msg);
                 printf("Recept reussie, emission msg: ");
-                
                 // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
-                
                 scanf(" %[^\n]", msg);
-                
-                
-                
                 /*
                 envoie du message grâce aux informations contenue dans le message qui a été reçut.
                 */
@@ -164,12 +154,7 @@ int main (int argc, char *argv[]) {
                 }
                 else
                     printf("Ecriture reussie, msg: %s\n", msg);
-
-                
-                
-                
                 // On referme la socket de communication
-                
             }
             close(sock);
             exit(1);
