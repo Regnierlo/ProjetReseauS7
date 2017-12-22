@@ -93,7 +93,7 @@ int creersock( u_short port) {
 int main (int argc, char *argv[]) {
 
   // On d?finit les variables n?c?ssaires
-  int newsockfd, s, sock;
+  int sock;
   u_short port;
   char msg [BUFSIZ];
 
@@ -118,7 +118,9 @@ int main (int argc, char *argv[]) {
   int fromsize = sizeof from;
   int n = 0;
   while(1){
-      memset(msg, 0, sizeof msg);
+    /*
+      Réception du message au sauvegarde des informations de l'émetteur.
+    */
     if((n = recvfrom(sock, msg, sizeof msg - 1, 0, (struct sockaddr *) & from, &fromsize)) < 0)
     {
         perror("recvfrom()");
@@ -135,7 +137,6 @@ int main (int argc, char *argv[]) {
             // On lit le message envoy? par la socket de communication. 
             //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
             // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-            //s = read(newsockfd, msg, 1024);
             
 
             if (msg == -1)
@@ -146,13 +147,16 @@ int main (int argc, char *argv[]) {
                 msg[n] = 0;
                 printf("Msg: %s\n", msg);
                 printf("Recept reussie, emission msg: ");
-
+                
                 // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
-                printf("je passe ici");
-                memset(msg, 0, sizeof msg);
+                
                 scanf(" %[^\n]", msg);
                 
-
+                
+                
+                /*
+                envoie du message grâce aux informations contenue dans le message qui a été reçut.
+                */
                 if(sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&from, fromsize) < 0)
                 {
                     perror("sendto()");
@@ -165,13 +169,12 @@ int main (int argc, char *argv[]) {
                 
                 
                 // On referme la socket de communication
-                close(newsockfd);
-                close(sock);
-                exit(1);
+                
             }
+            close(sock);
+            exit(1);
         }
     }
-    close(newsockfd);
   }
 
   // On referme la socket d'?coute.

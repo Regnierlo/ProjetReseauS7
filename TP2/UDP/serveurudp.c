@@ -146,7 +146,7 @@ int main (int argc, char *argv[]) {
     }
 
     memcpy((char *)&adresse.sin_addr, (char *)recup->h_addr, recup->h_length);
-    
+    msg[n]='.';
 
     if(sendto(sock,msg,strlen(msg),0, (struct sockaddr *)&clientaddr, clientlen) < 0)
     {
