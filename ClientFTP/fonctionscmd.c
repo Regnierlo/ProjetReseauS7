@@ -189,20 +189,29 @@ int getnbarguments(char* string, char separateur)
 
 struct listeArgument recuperationArguments(char* entry_user)
 {
+    //declaration structure
     struct listeArgument listeArguments;
+    //allocation liste arguments
     listeArguments.arguments = (char**)malloc((BUFSIZ) * sizeof(char*));
+    //string qui va recevoir arguments
     char *arg;
+
     int i=0;
     int init = 0;
     
+    //recuperation nb arguments
     listeArguments.nbarg = getnbarguments(entry_user,' ');
     
     for(;i<listeArguments.nbarg;i++)
     {
+        //recuperation de l argument
         arg = subcommande(entry_user,i+1,' ');
+        //allocation de la memoire pour l argument
         listeArguments.arguments[i] = (char*)malloc((BUFSIZ)*sizeof(char));
+        //initialisation de la memoire
         for(;init<BUFSIZ;init++)
             listeArguments.arguments[init] = 0;
+        //ajout de l argument
         listeArguments.arguments[i] = arg;
     }
 
@@ -213,10 +222,12 @@ struct listeArgument recuperationArguments(char* entry_user)
 char* commandeToUpper(char* cmd)
 {
     int i=0;
+    //recuperation de la commande
     int size = strlen(subcommande(cmd,1,' '));
 
     for(;i<size;i++)
     {
+        //mis en majuscule de la commande
         cmd[i] = toupper((int)(cmd[i]));
     }
     return cmd;
@@ -234,6 +245,8 @@ int getnumcmd(char* cmd)
     
     c = commandeToUpper(c);
     printf("GETNUMCMD - COMMANDE : %s\n",c);
+
+    //on compare les strings et on donne la valeur de la struct si ok
     if(strcmp(c,"HELP") == 0)
         num = HELP;
     else if(strcmp(c,"CD") == 0)
@@ -274,10 +287,12 @@ char* cmd_cd(char* cmd, struct listeArgument listearg)
     int i=0;
     strcpy(cmd,"");
 
+    //modification de la commande pour qu elle soit reconnu par le serveur
     strcpy(listearg.arguments[0],"CWD");
 
     for(;i<listearg.nbarg;i++)
     {
+        //on recre la commande
         strcat(cmd,listearg.arguments[i]);
         if(i+1 < listearg.nbarg)
             strcat(cmd, " ");
@@ -309,16 +324,23 @@ void cmd_lcd(char* newWorkinkDirectory)
 
 void cmd_lls(struct listeArgument listeArg)
 {
+    //si le client liste autre chose que le dossier courant
     if(listeArg.nbarg > 1)
     {
+        //allocation pour la commande
         char* cmd = (char*)malloc((BUFSIZ)*sizeof(char*));
+        //modification pour qu elle soit reconnu
         strcpy(cmd,"ls -l ");
+        //recreation de la commande
         strcat(cmd,listeArg.arguments[1]);
+        //envoie commande au systeme
         system(cmd);
+        //liberation memoire
         free(cmd);
     }
     else
     {
+        //si ls dans le dossier courant
         system("ls -al");
     }
 }
