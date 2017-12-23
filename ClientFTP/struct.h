@@ -20,7 +20,8 @@ typedef enum numcmd{
     PUT = 10,
     RM = 11,
     LRM = 12,
-    QUIT = 13
+    QUIT = 13,
+    PASVMODE = 14
 }enumcommande;
 
 #endif

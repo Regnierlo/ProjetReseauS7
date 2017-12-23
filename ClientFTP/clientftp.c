@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         msgSrv[i] = '.';
 
     //indication du mode passif ou non (boolean)
-    pasv = 0;
+    pasv = 1;
     //indique si l envoie du message est neccessaire
     envoieMessage = 0;
     //savoir si le client faut arreter le logiciel
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
     //recuperation et sauvegarde du dossier local
     getcwd(dossierCourantLocal,MAXSIZE);
 
-
+    printf("Commande help pour accéder à la liste des commandes\n");
     do
     {
         printf("ftp> ");
@@ -246,7 +246,10 @@ int main(int argc, char *argv[])
                 envoieMessage = 0;
                 break;
             case LS:
-                cmd_ls(ip,cmdtmp,sock);
+                if(pasv == 1)
+                    cmd_ls(ip,cmdtmp,sock);
+                else
+                    printf("A FAIRE\n");
                 envoieMessage = 0;
                 break;
             case LLS:
@@ -259,11 +262,17 @@ int main(int argc, char *argv[])
                 envoieMessage = 1;
                 break;
             case GET:
-                cmd_get(ip,listeArgumentsCommande, sock);
+                if(pasv == 1)
+                    cmd_get(ip,listeArgumentsCommande, sock);
+                else
+                    printf("A FAIRE\n");
                 envoieMessage = 0;
                 break;
             case PUT:
-                printf("Non implémentée\n");
+                if(pasv == 1)
+                    printf("Non implémentée\n");
+                else
+                    printf("A FAIRE\n");
                 envoieMessage = 0;
                 break;
             case RM:
@@ -282,9 +291,25 @@ int main(int argc, char *argv[])
                 printf("Non implémentée\n");
                 envoieMessage = 0;
                 break;
+            case HELP:
+                cmd_help();
+                envoieMessage = 0;
+                break;
+            case PASVMODE:
+                if(pasv == 1)
+                {
+                    pasv = 0;
+                    printf("Entrée en mode actif\n");
+                }
+                else
+                {
+                    pasv = 1;
+                    printf("Entrée en mode passif\n");
+                }
+                envoieMessage = 0;
+                break;
             default:
                 printf("COMMANDE INCONNUE\n");
-                printf("NUM COMMANDE : %d\n",numCmd);
                 break;
         }
         

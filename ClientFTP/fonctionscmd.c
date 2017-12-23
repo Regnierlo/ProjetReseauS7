@@ -275,6 +275,8 @@ int getnumcmd(char* cmd)
         num = RM;
     else if(strcmp(c,"LRM") == 0)
         num = LRM;
+    else if(strcmp(c,"PASV") == 0)
+        num = PASVMODE;
 
     free (c);
     return num;
@@ -601,10 +603,12 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
     //tant qu on recoit quelque chose
     while((verifLecture = read(newsock,msgSrv,BUFSIZ)) > 0)
     {
+        //indicateur d ecriture pour la reception actuelle
         total = 0;
+        //ou on en est dans la taille total transfere
         currentSize += verifLecture;
         tmp2 = tmp * down;
-
+        //boucle pour la progression
         while(tmp2 <= currentSize)
         {
             printf("#");
@@ -612,10 +616,13 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
             down += 2;
             tmp2 = tmp * down;
         }
-
+        
+        //tant qu on a pas ecrit tout ce qu on a recu
         while(total < verifLecture)
         {
+            //ecrite dans le fichier de ce qu on a recu
             p = write(f,msgSrv+total,verifLecture-total);
+            //mis a jour de la quantite recopiee
             total += p;
         }
     }
@@ -633,4 +640,23 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
         perror("Erreur read");
         exit(errno);
     }
+}
+
+void cmd_help()
+{
+    printf("help\tListe les commandes disponible\n");    
+    printf("ls\tListe les fichiers du dossier courant sur le serveur\n");
+    printf("lls\tListe les fichiers du dossier courant en local\n");
+    printf("cd\tChange de dossier sur le serveur\n");
+    printf("lcd\tChange de dossier en local\n");
+    printf("pwd\tIndique dans quel dossier on se situe sur le serveur\n");
+    printf("lpwd\tIndique dans quel dossier on se situe en local\n");
+    printf("rm (non implemente)\t Permet de supprimer le fichier sur le serveur\n");
+    printf("lrm (non implemente)\tPermet de supprmer le fichier local\n");
+    printf("mkdir (non implemente)\tPermet de créer un dossier sur le serveur\n");
+    printf("lmkdir (non implemente)\tPermet de créer un dossier en local\n");
+    printf("get\tPermet de telecharger un fichier du serveur en local\n");
+    printf("put\tPermet d'envoyer un fishier local sur le serveur\n");
+    printf("pasv\tPermet de passer en mode passif ou en mode actif\n");
+    printf("quit\tPermet de quitter le client ftp\n");
 }

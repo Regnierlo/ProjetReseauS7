@@ -27,5 +27,6 @@ void cmd_lpwd();
 void cmd_ls(char* ip, char* cmd, int sock);
 void cmd_lls(struct listeArgument listeArg);
 void cmd_get(char* ip, struct listeArgument listeArg, int sock);
+void cmd_help();
 
 #endif
