@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
                 envoieMessage = 1;
                 break;
             case GET:
-                cmd_get(listeArgumentsCommande, sock);
+                cmd_get(ip,listeArgumentsCommande, sock);
                 envoieMessage = 0;
                 break;
             case PUT:

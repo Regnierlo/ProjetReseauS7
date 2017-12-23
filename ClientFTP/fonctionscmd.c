@@ -480,13 +480,157 @@ void cmd_ls(char* ip, char* cmd, int sock)
 }
 
 //telechargement fichier
-void cmd_get(struct listeArgument listeArg, int sock)
+void cmd_get(char* ip, struct listeArgument listeArg, int sock)
 {
-    printf("CMD GET\nSOCK : %d\n",sock);
-    int i =0;
-    for(;i<listeArg.nbarg;i++)
+    //Variables
+    int verifLecture;
+    int port;
+    int newsock; //socket pour la connection passive
+    
+    //pour avancee
+    int sizeFile;
+    int tmp;
+    int tmp2;
+    int p;
+    int total;
+    int down = 2;
+
+    char msgSrv[BUFSIZ];
+    char msgPourSrv[BUFSIZ];
+
+    //pour fichier local
+    int currentSize;
+    int f;
+    
+
+    //Initialisation
+    //pour les retours du serveur
+    int i = 0;
+    for(;i<BUFSIZ;i++)
     {
-        printf("%s ",listeArg.arguments[i]);
+        msgSrv[i] = '.';
+        msgPourSrv[i] = '.';
     }
-    printf("\n");
+
+    //passage en mode binaire pour effectuer le transfert
+    if(write(sock,"TYPE I\r\n",8) == ERREUR)
+    {
+        perror("Erreur TYPE I");
+        return;//c est moche ENCORE oui mais faut sortir :(
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+     //demande pour utiliser serveur en mode passif
+    if(write(sock,"PASV\r\n",6) == ERREUR)
+    {
+        perror("Erreur mode passif");
+        return;
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+    
+    port = getportpasv(verifLecture,msgSrv);
+    
+    //creation socket pour la connection data
+    newsock = creaSock(ip,port);
+
+    //recuperation taille du fichier par le serveur
+    //on emet l hypothese qu il n y a qu un seul argument
+    sprintf(msgPourSrv,"SIZE %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur recuperation taille fichier");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    //afficheReponse(verifLecture,msgSrv);
+    sizeFile = atoi(msgSrv+4);
+
+    //recuperation fichier
+    sprintf(msgPourSrv,"RETR %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur demande telechargement");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+
+    //---------------------------------
+    //Recuperation fichier
+
+    //creation fichier
+    f = open(listeArg.arguments[1],O_CREAT|O_WRONLY|O_TRUNC,0644);
+    //pour avancement
+    currentSize = 0;
+    if(sizeFile%100 == 0) //car 100% = fichier telecharge
+        tmp = (sizeFile/100);
+    else
+        tmp = (sizeFile/100)+1;
+
+    tmp2 = tmp;
+    printf("Telechargement [");//Debut avance
+    fflush(stdout);
+    
+    //tant qu on recoit quelque chose
+    while((verifLecture = read(newsock,msgSrv,BUFSIZ)) > 0)
+    {
+        total = 0;
+        currentSize += verifLecture;
+        tmp2 = tmp * down;
+
+        while(tmp2 <= currentSize)
+        {
+            printf("#");
+            fflush(stdout);
+            down += 2;
+            tmp2 = tmp * down;
+        }
+
+        while(total < verifLecture)
+        {
+            p = write(f,msgSrv+total,verifLecture-total);
+            total += p;
+        }
+    }
+
+    printf("] 100%%\n");
+    fflush(stdout);
+
+
+    close(newsock);
+    close(f);
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
 }
