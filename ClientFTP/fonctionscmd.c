@@ -244,7 +244,7 @@ int getnumcmd(char* cmd)
     c = subcommande(cmd,1,' ');
     
     c = commandeToUpper(c);
-    printf("GETNUMCMD - COMMANDE : %s\n",c);
+    //printf("GETNUMCMD - COMMANDE : %s\n",c); //pour moi (lois)
 
     //on compare les strings et on donne la valeur de la struct si ok
     if(strcmp(c,"HELP") == 0)
