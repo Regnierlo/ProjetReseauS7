@@ -1,3 +1,6 @@
+#ifndef FONCTIONCSCMD_H
+#define FONCTIONCSCMD_H
+
 void afficheReponse(int length, char *msgSrv);
 //Recupere le dossier courant grace a la reponse serveur
 //(fait le trie dans la réponse serveur)
@@ -24,3 +27,5 @@ void cmd_lpwd();
 void cmd_ls(char* ip, char* cmd, int sock);
 void cmd_lls(struct listeArgument listeArg);
 void cmd_get(struct listeArgument listeArg, int sock);
+
+#endif
