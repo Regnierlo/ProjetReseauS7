@@ -660,7 +660,7 @@ void cmd_help()
     printf("mkdir (non implemente)\tPermet de créer un dossier sur le serveur\n");
     printf("lmkdir (non implemente)\tPermet de créer un dossier en local\n");
     printf("get\tPermet de telecharger un fichier du serveur en local\n");
-    printf("put\tPermet d'envoyer un fishier local sur le serveur\n");
+    printf("put\tPermet d'envoyer un fichier local sur le serveur\n");
     printf("pasv\tPermet de passer en mode passif ou en mode actif\n");
     printf("quit\tPermet de quitter le client ftp\n");
 }
