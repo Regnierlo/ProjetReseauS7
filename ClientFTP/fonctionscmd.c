@@ -344,7 +344,7 @@ void cmd_lls(struct listeArgument listeArg)
     else
     {
         //si ls dans le dossier courant
-        system("ls -al");
+        system("ls -l");
     }
 }
 
@@ -635,12 +635,15 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
     close(f);
     
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
         perror("Erreur read");
         exit(errno);
     }
+    afficheReponse(verifLecture,msgSrv);
+    
 }
 
 void cmd_help()
@@ -657,7 +660,7 @@ void cmd_help()
     printf("mkdir (non implemente)\tPermet de créer un dossier sur le serveur\n");
     printf("lmkdir (non implemente)\tPermet de créer un dossier en local\n");
     printf("get\tPermet de telecharger un fichier du serveur en local\n");
-    printf("put\tPermet d'envoyer un fishier local sur le serveur\n");
+    printf("put\tPermet d'envoyer un fichier local sur le serveur\n");
     printf("pasv\tPermet de passer en mode passif ou en mode actif\n");
     printf("quit\tPermet de quitter le client ftp\n");
 }
@@ -789,6 +792,7 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
 
     //reception informations serveur transfert fini
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -1085,12 +1089,14 @@ void cmd_get_pasv(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
     close(f);
     
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
         perror("Erreur read");
         exit(errno);
     }
+    afficheReponse(verifLecture,msgSrv);
 }
 
 void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
@@ -1224,6 +1230,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
 
     //reception informations serveur transfert fini
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
