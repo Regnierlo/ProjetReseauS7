@@ -635,12 +635,15 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
     close(f);
     
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
         perror("Erreur read");
         exit(errno);
     }
+    afficheReponse(verifLecture,msgSrv);
+    
 }
 
 void cmd_help()
@@ -789,6 +792,7 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
 
     //reception informations serveur transfert fini
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -1085,12 +1089,14 @@ void cmd_get_pasv(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
     close(f);
     
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
         perror("Erreur read");
         exit(errno);
     }
+    afficheReponse(verifLecture,msgSrv);
 }
 
 void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
@@ -1224,6 +1230,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
 
     //reception informations serveur transfert fini
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
