@@ -19,6 +19,8 @@ int getnumcmd(char* cmd);
 int getportpasv(int size, char* msg);
 //creation socket
 int creaSock(char* ip, int port);
+//creation socket pour mode actif
+int creersockActif( u_short port);
 //-------------------------------
 //gestion commande cd
 char* cmd_cd(char* cmd, struct listeArgument listearg);
@@ -28,5 +30,8 @@ void cmd_ls(char* ip, char* cmd, int sock);
 void cmd_lls(struct listeArgument listeArg);
 void cmd_get(char* ip, struct listeArgument listeArg, int sock);
 void cmd_help();
-
+void cmd_put(char* ip, struct listeArgument listeArg, int sock);
+void cmd_ls_pasv(char* iptmp, int sock);
+void cmd_get_pasv(char* iptmp, struct listeArgument listeArg, int sock);
+void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock);
 #endif

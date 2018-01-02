@@ -9,7 +9,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include<fcntl.h> //pour manipuler les fichiers
+#include <fcntl.h> //pour manipuler les fichiers
+#include <sys/stat.h> //pour recuperer info fichiers
 #include "struct.h"
 
 #define ERREUR -1
@@ -659,4 +660,583 @@ void cmd_help()
     printf("put\tPermet d'envoyer un fishier local sur le serveur\n");
     printf("pasv\tPermet de passer en mode passif ou en mode actif\n");
     printf("quit\tPermet de quitter le client ftp\n");
+}
+
+void cmd_put(char* ip, struct listeArgument listeArg, int sock)
+{
+    //Variables
+    int verifLecture;
+    int port;
+    int newsock; //socket pour la connection passive
+
+    int f; //pour fichier
+    struct stat statFichier;//informations a propos du fichier
+
+    //pour transfert
+    int sizeFichier;
+    int currentSize;
+    int down = 2;
+    int tmp;
+    int tmp2;
+    int total;
+    int p;
+
+    char msgSrv[BUFSIZ];
+    char msgPourSrv[BUFSIZ];
+
+    //Initialisation
+    //pour les retours du serveur
+    int i = 0;
+    for(;i<BUFSIZ;i++)
+    {
+        msgSrv[i] = '.';
+        msgPourSrv[i] = '.';
+    }
+
+    //passage en mode binaire pour effectuer le transfert
+    if(write(sock,"TYPE I\r\n",8) == ERREUR)
+    {
+        perror("Erreur TYPE I");
+        return;//c est moche ENCORE oui mais faut sortir :(
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+     //demande pour utiliser serveur en mode passif
+    if(write(sock,"PASV\r\n",6) == ERREUR)
+    {
+        perror("Erreur mode passif");
+        return;
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+    
+    port = getportpasv(verifLecture,msgSrv);
+    
+    //creation socket pour la connection data
+    newsock = creaSock(ip,port);
+    
+    //on emet l hypothese qu il n y a qu un seul argument
+    sprintf(msgPourSrv,"STOR %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur upload");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+
+    //------------------------------------
+    //DEBUT ENVOIE
+    f = open(listeArg.arguments[1], O_RDONLY);
+    fstat(f,&statFichier);
+    sizeFichier = (int)statFichier.st_size;
+    //pour avancement
+    currentSize = 0;
+    if(sizeFichier%100 == 0)
+        tmp = (sizeFichier/100);
+    else
+        tmp = (sizeFichier/100);
+    tmp2 = tmp;
+    printf("Envoie [");
+    fflush(stdout);
+
+    //tant qu on a pas envoye tout le fichier on continue
+    while(sizeFichier > 0)
+    {
+        verifLecture = read(f,msgSrv,BUFSIZ);
+        currentSize += verifLecture;
+        tmp2 = tmp * down;
+
+        while(tmp2 <= currentSize)
+        {
+            printf("#");
+            fflush(stdout);
+            down += 2;
+            tmp2 = tmp * down;
+        }
+        total = 0;
+        while(total < verifLecture)
+        {
+            //envoie des données
+            p = write(newsock,msgSrv+total,verifLecture-total);
+            total += p;
+        }
+        sizeFichier -= verifLecture;
+    }
+
+    printf("] 100 %%\n");
+    fflush(stdout);
+
+    close(newsock);
+
+    //reception informations serveur transfert fini
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+}
+
+int creersockActif( u_short port) {
+
+    int sock, retour;
+    struct sockaddr_in adresse;
+    
+    sock = socket(AF_INET,SOCK_STREAM,0);
+
+    if (sock<0) {
+        perror ("ERREUR OUVERTURE");
+        return(-1);
+    }
+  
+    adresse.sin_family = AF_INET;
+    adresse.sin_port = htons(port);
+    adresse.sin_addr.s_addr=INADDR_ANY;
+  
+    retour = bind (sock,(struct sockaddr *)&adresse,sizeof(adresse));
+    
+    if (retour<0) {
+        perror ("IMPOSSIBLE DE NOMMER LA SOCKET");
+        return(-1);
+    }
+
+    return (sock);
+}
+
+void cmd_ls_pasv(char* iptmp, int sock)
+{
+    //Variables
+    int verifLecture;
+    int sockactif;
+    int newsockactif;
+
+    char msgSrv[BUFSIZ];
+    char msgPourSrv[BUFSIZ];
+
+    //pour travailler sur une variable local et pas changer l adresse
+    char ip[BUFSIZ];
+    strcpy(ip,iptmp);
+    
+    //Choix du port
+    //Initialisation
+    //pour les retours du serveur
+    int i = 0;
+    for(;i<BUFSIZ;i++)
+    {
+        msgSrv[i] = '.';
+        msgPourSrv[i] = '.';
+    }
+    
+    //verification ip et transformation si besoin
+    if(strcmp(ip,"localhost") == 0)
+        strcpy(ip,"127,0,0,1");
+    else //sinon remplacer les '.' par des ','
+    {
+        for(i=0;i<9;i++)
+        {
+            if(ip[i] == '.')
+                ip[i] = ',';
+        }
+    }
+
+    //dynamiser le port ?
+    strcat(ip,",136,202");
+    sprintf(msgPourSrv,"PORT %s\r\n",ip);
+    
+    sockactif = creersockActif((136*256+202));
+    listen(sockactif,5);
+    
+    //envoie de l information pour le numero du port
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur PORT");
+        return;//c est moche ENCORE oui mais faut sortir :(
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+    
+    if(write(sock,"LIST\r\n",6) == 0)
+    {
+        perror("LIST ACTIF");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+    
+    newsockactif = accept (sockactif, (struct sockaddr *) 0, (unsigned int*) 0);
+    if (newsockactif == -1) {
+      perror("Erreur accept\n");
+      return;
+    }
+
+    //lecture reponse
+    verifLecture = read(newsockactif,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+    //fin
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+    close(sockactif);
+    close(newsockactif);
+}
+
+void cmd_get_pasv(char* iptmp, struct listeArgument listeArg, int sock)
+{
+    //Variables
+    int verifLecture;
+    int sockactif;
+    int newsockactif;
+    
+    //pour avancee
+    int sizeFile;
+    int tmp;
+    int tmp2;
+    int p;
+    int total;
+    int down = 2;
+
+    char msgSrv[BUFSIZ];
+    char msgPourSrv[BUFSIZ];
+
+    //pour fichier local
+    int currentSize;
+    int f;
+    
+
+    //pour travailler sur une variable local et pas changer l adresse
+    char ip[BUFSIZ];
+    strcpy(ip,iptmp);
+    
+    //Choix du port
+    //Initialisation
+    //pour les retours du serveur
+    int i = 0;
+    for(;i<BUFSIZ;i++)
+    {
+        msgSrv[i] = '.';
+        msgPourSrv[i] = '.';
+    }
+    
+    //verification ip et transformation si besoin
+    if(strcmp(ip,"localhost") == 0)
+        strcpy(ip,"127,0,0,1");
+    else //sinon remplacer les '.' par des ','
+    {
+        for(i=0;i<9;i++)
+        {
+            if(ip[i] == '.')
+                ip[i] = ',';
+        }
+    }
+
+    //dynamiser le port ?
+    strcat(ip,",136,203");
+    sprintf(msgPourSrv,"PORT %s\r\n",ip);
+    
+    sockactif = creersockActif((136*256+203));
+    listen(sockactif,5);
+
+    //envoie de l information pour le numero du port
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur PORT");
+        return;//c est moche ENCORE oui mais faut sortir :(
+    }
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+    //recuperation taille du fichier par le serveur
+    //on emet l hypothese qu il n y a qu un seul argument
+    sprintf(msgPourSrv,"SIZE %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur recuperation taille fichier");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    sizeFile = atoi(msgSrv+4);//3 char pour valeur reponse srv + 1 char pour espace
+
+    //recuperation fichier
+    sprintf(msgPourSrv,"RETR %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur demande telechargement");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+
+    //---------------------------------
+    //Recuperation fichier
+    
+    newsockactif = accept (sockactif, (struct sockaddr *) 0, (unsigned int*) 0);
+    if (newsockactif == -1) {
+      perror("Erreur accept\n");
+      return;
+    }
+
+    //creation fichier
+    f = open(listeArg.arguments[1],O_CREAT|O_WRONLY|O_TRUNC,0644);
+    //pour avancement
+    currentSize = 0;
+    if(sizeFile%100 == 0) //car 100% = fichier telecharge
+        tmp = (sizeFile/100);
+    else
+        tmp = (sizeFile/100)+1;
+
+    tmp2 = tmp;
+    printf("Telechargement [");//Debut avance
+    fflush(stdout);
+    
+    //tant qu on recoit quelque chose
+    while((verifLecture = read(newsockactif,msgSrv,BUFSIZ)) > 0)
+    {
+        //indicateur d ecriture pour la reception actuelle
+        total = 0;
+        //ou on en est dans la taille total transfere
+        currentSize += verifLecture;
+        tmp2 = tmp * down;
+        //boucle pour la progression
+        while(tmp2 <= currentSize)
+        {
+            printf("#");
+            fflush(stdout);
+            down += 2;
+            tmp2 = tmp * down;
+        }
+        
+        //tant qu on a pas ecrit tout ce qu on a recu
+        while(total < verifLecture)
+        {
+            //ecrite dans le fichier de ce qu on a recu
+            p = write(f,msgSrv+total,verifLecture-total);
+            //mis a jour de la quantite recopiee
+            total += p;
+        }
+    }
+
+    printf("] 100%%\n");
+    fflush(stdout);
+
+    close(sockactif);
+    close(newsockactif);
+    close(f);
+    
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+}
+
+void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
+{
+    //Variables
+    int verifLecture;
+    int sockactif;
+    int newsockactif;
+
+    int f; //pour fichier
+    struct stat statFichier;//informations a propos du fichier
+
+    //pour transfert
+    int sizeFichier;
+    int currentSize;
+    int down = 2;
+    int tmp;
+    int tmp2;
+    int total;
+    int p;
+
+    char msgSrv[BUFSIZ];
+    char msgPourSrv[BUFSIZ];
+
+    //pour travailler sur une variable local et pas changer l adresse
+    char ip[BUFSIZ];
+    strcpy(ip,iptmp);
+    
+    //Choix du port
+    //Initialisation
+    //pour les retours du serveur
+    int i = 0;
+    for(;i<BUFSIZ;i++)
+    {
+        msgSrv[i] = '.';
+        msgPourSrv[i] = '.';
+    }
+    
+    //verification ip et transformation si besoin
+    if(strcmp(ip,"localhost") == 0)
+        strcpy(ip,"127,0,0,1");
+    else //sinon remplacer les '.' par des ','
+    {
+        for(i=0;i<9;i++)
+        {
+            if(ip[i] == '.')
+                ip[i] = ',';
+        }
+    }
+
+    //dynamiser le port ?
+    strcat(ip,",136,204");
+    sprintf(msgPourSrv,"PORT %s\r\n",ip);
+    
+    sockactif = creersockActif((136*256+204));
+    listen(sockactif,5);
+    
+    //envoie de l information pour le numero du port
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur PORT");
+        return;//c est moche ENCORE oui mais faut sortir :(
+    }
+    
+    //on emet l hypothese qu il n y a qu un seul argument
+    sprintf(msgPourSrv,"STOR %s\r\n",listeArg.arguments[1]);
+
+    if(write(sock,msgPourSrv,strlen(msgPourSrv)) == ERREUR)
+    {
+        perror("Erreur upload");
+        return;
+    }
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+
+    //------------------------------------
+    //DEBUT ENVOIE
+
+    newsockactif = accept (sockactif, (struct sockaddr *) 0, (unsigned int*) 0);
+    if (newsockactif == -1) {
+      perror("Erreur accept\n");
+      return;
+    }
+
+    f = open(listeArg.arguments[1], O_RDONLY);
+    fstat(f,&statFichier);
+    sizeFichier = (int)statFichier.st_size;
+    //pour avancement
+    currentSize = 0;
+    if(sizeFichier%100 == 0)
+        tmp = (sizeFichier/100);
+    else
+        tmp = (sizeFichier/100);
+    tmp2 = tmp;
+    printf("Envoie [");
+    fflush(stdout);
+
+    //tant qu on a pas envoye tout le fichier on continue
+    while(sizeFichier > 0)
+    {
+        verifLecture = read(f,msgSrv,BUFSIZ);
+        currentSize += verifLecture;
+        tmp2 = tmp * down;
+
+        while(tmp2 <= currentSize)
+        {
+            printf("#");
+            fflush(stdout);
+            down += 2;
+            tmp2 = tmp * down;
+        }
+        total = 0;
+        while(total < verifLecture)
+        {
+            //envoie des données
+            p = write(newsockactif,msgSrv+total,verifLecture-total);
+            total += p;
+        }
+        sizeFichier -= verifLecture;
+    }
+
+    printf("] 100 %%\n");
+    fflush(stdout);
+
+    close(sockactif);
+    close(newsockactif);
+
+    //reception informations serveur transfert fini
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
+
+    verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    if(verifLecture <= ERREUR)
+    {
+        perror("Erreur read");
+        exit(errno);
+    }
+    afficheReponse(verifLecture,msgSrv);
 }
