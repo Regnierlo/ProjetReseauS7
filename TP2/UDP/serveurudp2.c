@@ -115,7 +115,7 @@ int main (int argc, char *argv[]) {
   listen (sock,5);
 
   struct in_addr from = { 0 };
-  int fromsize = sizeof from;
+  socklen_t fromsize = sizeof from;
   int n = 0;
   while(1){
     /*
@@ -135,7 +135,7 @@ int main (int argc, char *argv[]) {
             // On lit le message envoy? par la socket de communication. 
             //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
             // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-            if (msg == -1)
+            if (n == -1)
                 perror("Problemes");
             else {
                 // Si le code d'erreur est bon, on affiche le message.
