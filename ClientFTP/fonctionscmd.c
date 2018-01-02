@@ -344,7 +344,7 @@ void cmd_lls(struct listeArgument listeArg)
     else
     {
         //si ls dans le dossier courant
-        system("ls -al");
+        system("ls -l");
     }
 }
 
