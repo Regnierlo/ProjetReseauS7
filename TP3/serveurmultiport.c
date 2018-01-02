@@ -157,11 +157,10 @@ int main (int argc, char *argv[])
   u_short port1;
   u_short port2;
   char msg [BUFSIZ];
-  int next =0;
-  int maxfd = 10;
-  int newfd[10];
+  int newfd;
+  int n;
   struct in_addr from = { 0 };
-  int fromsize = sizeof from;
+  socklen_t fromsize = sizeof from;
  
   //on défini les ports ainsi : port1 pour le TCP et port2 pour l'UDP
   if(argc != 2)
@@ -172,7 +171,7 @@ int main (int argc, char *argv[])
   else
   {
     port1 = atoi(argv[1]);
-    port2 = atoi(argv[1]);
+    port2 = atoi(argv[2]);
   }
 
   // On cree les deux sockets, s1 pour les communications en TCP et s2 pour les communications en UDP
@@ -204,8 +203,9 @@ int main (int argc, char *argv[])
     FD_SET(s1, &readfds);
     FD_SET(s2, &readfds);
 
+
     //on vérifie que le descripteur ne renvoit rien, sinon une erreur est affichée (tcp et udp)
-    if(select(s1+1, &readfds,0,0,0)<0)
+   /* if(select(s1+1, &readfds,0,0,0)<0)
     {
         perror("Select s1");
         return(-1);
@@ -215,24 +215,33 @@ int main (int argc, char *argv[])
     {
         perror("Select s2");
         return(-1);
-    }
+    }*/
     
-    //on attend un changement sur la socket avec la lecture des données (si on reçoit un message)
-    select(s1+1, &readfds, 0,0,0);
-    select(s2+1, &readfds, 0,0,0);
-
+    //descripteur de socket le plus élévé ds deux
+    int max_s;
+    if(s1<s2){
+      max_s=s2;
+    }else{
+      max_s=s1;
+    }
+    //on attend un changement sur une socket avec la lecture des données (si on reçoit un message)
+    int activite=select(max_s+1, &readfds, 0,0,0);
+    if ((activite < 0) && (errno!=EINTR)) 
+        {
+            printf("erreur select");
+        }
     //dans cette boucle, on va rediriger selon si c'est du TCP ou UDP (normalement, et c'est là où ça bloque...) on arrive à lire le TCP avec le port 12332
     //mais pas l'UDP sur le port 12333
-    for(next=0;next<=maxfd;next++)
-    {
+   // for(next=0;next<=maxfd;next++)
+   // {
       //on vérifie que le descripteur s1 est contenu dans l'ensemble readfds, donc s'il y a une lecture de données possibles
       if(FD_ISSET(s1, &readfds))
       {
         //on accepte la connexion que l'on stock dans un tableau de socket
-        newfd[next] = accept (s1,(struct sockaddr *) 0, (unsigned int*) 0);
+        newfd = accept (s1,(struct sockaddr *) 0, (unsigned int*) 0);
       
         // Si l'accept se passe mal, on quitte le programme en affichant un message d'erreur.
-        if (newfd[next] == -1) 
+        if (newfd == -1) 
         {
           perror("Erreur accept\n");
           return(-1);
@@ -253,7 +262,7 @@ int main (int argc, char *argv[])
           // On lit le message envoy? par la socket de communication. 
           //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
           // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-          s = read(newfd[next], msg, 1024);
+          s = read(newfd, msg, 1024);
           
 
           if (s == -1)
@@ -269,7 +278,7 @@ int main (int argc, char *argv[])
             scanf(" %[^\n]", msg);
               
             // On va ?crire sur la socket, en testant le code d'erreur de la fonction write.
-            s = write(newfd[next], msg, strlen(msg));
+            s = write(newfd, msg, strlen(msg));
             if (s == -1) 
             {
               perror("Erreur write");
@@ -279,14 +288,15 @@ int main (int argc, char *argv[])
               printf("Ecriture reussie, msg: %s\n", msg);
               
             // On referme la socket de communication
-            close(newfd[next]);
+            close(newfd);
             exit(1);
           }
         }
       }
       if(FD_ISSET(s2, &readfds))
       {
-        if((newfd[next]= recvfrom(s2, msg, sizeof msg - 1, 0, (struct sockaddr *) & from, &fromsize)) < 0)
+        printf("toto");
+        if((n= recvfrom(s2, msg, sizeof msg - 1, 0, (struct sockaddr *) & from, &fromsize)) < 0)
         {
           perror("recvfrom() : ");
           exit(errno);
@@ -302,11 +312,11 @@ int main (int argc, char *argv[])
               // On lit le message envoy? par la socket de communication. 
               //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
               // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
-              if (msg == -1)
+              if (n == -1)
                   perror("Problemes");
               else {
                   // Si le code d'erreur est bon, on affiche le message.
-                  msg[newfd[next]] = 0;
+                  msg[n] = 0;
                   printf("Msg: %s\n", msg);
                   printf("Recept reussie, emission msg: ");
                   // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
@@ -324,12 +334,11 @@ int main (int argc, char *argv[])
                   // On referme la socket de communication
               }
               close(s2);
-              close(newfd[next]);
               exit(1);
           }
         }
       }
-    }    
+  // }    
   }
   // On referme la socket d'?coute.
   close(s1);
