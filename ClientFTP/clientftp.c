@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
                 if(pasv == 1)
                     cmd_ls(ip,cmdtmp,sock);
                 else
-                    printf("A FAIRE\n");
+                    cmd_ls_pasv(ip,sock);
                 envoieMessage = 0;
                 break;
             case LLS:
@@ -265,14 +265,14 @@ int main(int argc, char *argv[])
                 if(pasv == 1)
                     cmd_get(ip,listeArgumentsCommande, sock);
                 else
-                    printf("A FAIRE\n");
+                    cmd_get_pasv(ip,listeArgumentsCommande,sock);
                 envoieMessage = 0;
                 break;
             case PUT:
                 if(pasv == 1)
-                    printf("Non implémentée\n");
+                    cmd_put(ip, listeArgumentsCommande, sock);
                 else
-                    printf("A FAIRE\n");
+                    cmd_put_pasv(ip,listeArgumentsCommande,sock);
                 envoieMessage = 0;
                 break;
             case RM:
