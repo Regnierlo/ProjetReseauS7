@@ -202,22 +202,8 @@ int main (int argc, char *argv[])
     //on ajoute un descripteur pour relier la socket avec la lecture des données (on le fait pour la socket TCP et UDP)
     FD_SET(s1, &readfds);
     FD_SET(s2, &readfds);
-
-
-    //on vérifie que le descripteur ne renvoit rien, sinon une erreur est affichée (tcp et udp)
-   /* if(select(s1+1, &readfds,0,0,0)<0)
-    {
-        perror("Select s1");
-        return(-1);
-    }
-
-    if(select(s2+1, &readfds,0,0,0)<0)
-    {
-        perror("Select s2");
-        return(-1);
-    }*/
     
-    //descripteur de socket le plus élévé ds deux
+    //on cherche le descripteur de socket le plus élévé des deux
     int max_s;
     if(s1<s2){
       max_s=s2;
@@ -230,10 +216,6 @@ int main (int argc, char *argv[])
         {
             printf("erreur select");
         }
-    //dans cette boucle, on va rediriger selon si c'est du TCP ou UDP (normalement, et c'est là où ça bloque...) on arrive à lire le TCP avec le port 12332
-    //mais pas l'UDP sur le port 12333
-   // for(next=0;next<=maxfd;next++)
-   // {
       //on vérifie que le descripteur s1 est contenu dans l'ensemble readfds, donc s'il y a une lecture de données possibles
       if(FD_ISSET(s1, &readfds))
       {
@@ -293,6 +275,7 @@ int main (int argc, char *argv[])
           }
         }
       }
+      //on vérifie que le descripteur s2 est contenu dans l'ensemble readfds, donc s'il y a une lecture de données possibles
       if(FD_ISSET(s2, &readfds))
       {
         printf("toto");
