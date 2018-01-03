@@ -631,7 +631,7 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
     printf("] 100%%\n");
     fflush(stdout);
 
-
+    
     close(newsock);
     close(f);
     
@@ -788,11 +788,12 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
 
     printf("] 100 %%\n");
     fflush(stdout);
+    
 
     close(newsock);
 
     //reception informations serveur transfert fini
-    memset(msgSrv,'.',BUFSIZ);
+    memset(msgSrv,'.',BUFSIZ);printf("coucou");fflush(stdout);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -1223,7 +1224,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
         }
         sizeFichier -= verifLecture;
     }
-
+    
     printf("] 100 %%\n");
     fflush(stdout);
 
@@ -1233,6 +1234,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
     //reception informations serveur transfert fini
     memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
+    
     if(verifLecture <= ERREUR)
     {
         perror("Erreur read");
