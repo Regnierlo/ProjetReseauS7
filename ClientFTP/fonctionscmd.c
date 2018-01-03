@@ -1160,7 +1160,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
         perror("Erreur PORT");
         return;//c est moche ENCORE oui mais faut sortir :(
     }
-    
+
     //on emet l hypothese qu il n y a qu un seul argument
     sprintf(msgPourSrv,"STOR %s\r\n",listeArg.arguments[1]);
 
@@ -1176,6 +1176,7 @@ void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock)
         perror("Erreur read");
         exit(errno);
     }
+    afficheReponse(verifLecture,msgSrv);
 
     //------------------------------------
     //DEBUT ENVOIE
