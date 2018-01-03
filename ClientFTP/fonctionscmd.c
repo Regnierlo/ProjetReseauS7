@@ -793,7 +793,7 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
 
     //reception informations serveur transfert fini
-    memset(msgSrv,'.',BUFSIZ);printf("coucou");fflush(stdout);
+    memset(msgSrv,'.',BUFSIZ);
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
