@@ -26,6 +26,7 @@ n?c?ssaire ? l'op?ration bind().
 Cette fonction renvoie un num?ro qui permet d'identifier la socket nouvellement cr??e
 (ou la valeur -1 si l'op?ration a ?chou?e).
 */
+
 int creersock( u_short port) {
 
   // On cr?e deux variables enti?res
@@ -90,72 +91,79 @@ int creersock( u_short port) {
 
 
 int main (int argc, char *argv[]) {
-  struct hostent *hostp; /* client host info */
-  struct sockaddr_in clientaddr; /* client addr */
-  struct hostent *recup;
-  struct sockaddr_in adresse;
-  char *hostaddrp;
-
 
   // On d?finit les variables n?c?ssaires
   int sock;
   u_short port;
   char msg [BUFSIZ];
-  
+
   if(argc != 2)
     port=P;
   else
     port = atoi(argv[1]);
+
+  // On cr?e la socket
+  sock = creersock (port);
+
   
-  port=P; 
 
+  /*
+  listen
+	permet de dimensionner la taille de la file d'attente.
+   On passe en param?tre la socket qui va ?couter, et un entier qui d?signe le nombre de connexions simultan?es autoris?es (backlog)
+  */
+  listen (sock,5);
 
-  int n;
-  int clientlen = sizeof(clientaddr);
-  while(1)
-  {
-    
-    // On cr?e la socket
-    sock = creersock (port);
-
-    
-    if((n = recvfrom(sock, msg, sizeof msg - 1, 0,
-              (struct sockaddr *) &clientaddr, clientlen)) < 0)
+  struct in_addr from = { 0 };
+  socklen_t fromsize = sizeof from;
+  int n = 0;
+  while(1){
+    /*
+      Réception du message au sauvegarde des informations de l'émetteur.
+    */
+    if((n = recvfrom(sock, msg, sizeof msg - 1, 0, (struct sockaddr *) & from, &fromsize)) < 0)
     {
-        printf("%d\n",n);
         perror("recvfrom()");
         exit(errno);
+    }else{
+        int f = fork();
+        if(f == -1){
+        perror("Erreur fork");
+        exit(1);
+        }
+        if(f == 0){
+            // On lit le message envoy? par la socket de communication. 
+            //  msg contiendra la chaine de caract?res envoy?e par le r?seau,
+            // s le code d'erreur de la fonction. -1 si pb et sinon c'est le nombre de caract?res lus
+            if (n == -1)
+                perror("Problemes");
+            else {
+                // Si le code d'erreur est bon, on affiche le message.
+                msg[n] = 0;
+                printf("Msg: %s\n", msg);
+                printf("Recept reussie, emission msg: ");
+                // On demande ? l'utilisateur de rentrer un message qui va ?tre exp?di? sur le r?seau
+                scanf(" %[^\n]", msg);
+                /*
+                envoie du message grâce aux informations contenue dans le message qui a été reçut.
+                */
+                if(sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&from, fromsize) < 0)
+                {
+                    perror("sendto()");
+                    exit(errno);
+                }
+                else
+                    printf("Ecriture reussie, msg: %s\n", msg);
+                // On referme la socket de communication
+            }
+            close(sock);
+            exit(1);
+        }
     }
-
-    recup = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
-			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-    hostaddrp = inet_ntoa(clientaddr.sin_addr);
-    msg[n] = '\0';
-    printf("server received datagram from %s (%s)\n", 
-	   hostp->h_name, hostaddrp);
-    printf("Msg: %s\n",msg);
-
-    memcpy(msg,"Bonjour",strlen("Bonjour")+1);
-    
-
-    
-    
-    if (recup == NULL) {
-        perror("Erreur obtention adresse");
-        return(-1);
-    }
-
-    memcpy((char *)&adresse.sin_addr, (char *)recup->h_addr, recup->h_length);
-    msg[n]='.';
-
-    if(sendto(sock,msg,strlen(msg),0, (struct sockaddr *)&clientaddr, clientlen) < 0)
-    {
-      perror("sendto()");
-      exit(errno);
-    }
-    // On referme la socket d'?coute.
-    close(sock);
   }
 
+  // On referme la socket d'?coute.
+  close(sock);
+  
   return 0;
 }
