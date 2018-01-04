@@ -245,7 +245,7 @@ int getnumcmd(char* cmd)
     c = subcommande(cmd,1,' ');
     
     c = commandeToUpper(c);
-    //printf("GETNUMCMD - COMMANDE : %s\n",c); //pour moi (lois)
+    //printf("GETNUMCMD - COMMANDE : %s\n",c); //pour moi
 
     //on compare les strings et on donne la valeur de la struct si ok
     if(strcmp(c,"HELP") == 0)
@@ -457,7 +457,7 @@ void cmd_ls(char* ip, char* cmd, int sock)
     afficheReponse(verifLecture,msgSrv);
 
     //fichier temporaire
-    //int tmpfile = open("temp.txt",O_WRONLY|O_CREAT|O_TRUNC);
+    //int tmpfile = open("temp.txt",O_WRONLY|O_CREAT|O_TRUNC); //utile pour implementer la tubulation et lister fichier (pas utilisation socket donc non implemente)
 
     //tant qu on a quelque chose a lire
     while((verifLecture = read(newsock,msgSrv,strlen(msgSrv))) > 0)
@@ -635,7 +635,8 @@ void cmd_get(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
     close(f);
     
-    memset(msgSrv,'.',BUFSIZ);
+    //informations de fin
+    memset(msgSrv,'.',BUFSIZ);//nettoyage buffer
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -793,7 +794,7 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
     close(newsock);
 
     //reception informations serveur transfert fini
-    memset(msgSrv,'.',BUFSIZ);
+    memset(msgSrv,'.',BUFSIZ);//nettoyage buffer
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -803,6 +804,7 @@ void cmd_put(char* ip, struct listeArgument listeArg, int sock)
     afficheReponse(verifLecture,msgSrv);
 }
 
+//configuration de la socket pour le mode actif - code base sur tp1
 int creersockActif( u_short port) {
 
     int sock, retour;
@@ -869,6 +871,7 @@ void cmd_ls_activ(char* iptmp, int sock)
     strcat(ip,",136,202");
     sprintf(msgPourSrv,"PORT %s\r\n",ip);
     
+    //creation socket plus ecoute
     sockactif = creersockActif((136*256+202));
     listen(sockactif,5);
     
@@ -887,6 +890,7 @@ void cmd_ls_activ(char* iptmp, int sock)
     }
     afficheReponse(verifLecture,msgSrv);
     
+    //envoie commande pour listing
     if(write(sock,"LIST\r\n",6) == 0)
     {
         perror("LIST ACTIF");
@@ -1090,7 +1094,8 @@ void cmd_get_activ(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
     close(f);
     
-    memset(msgSrv,'.',BUFSIZ);
+    //reception informations fin envoie
+    memset(msgSrv,'.',BUFSIZ);//nettoyage buffer
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     if(verifLecture <= ERREUR)
     {
@@ -1232,7 +1237,7 @@ void cmd_put_activ(char* iptmp, struct listeArgument listeArg, int sock)
     close(newsockactif);
 
     //reception informations serveur transfert fini
-    memset(msgSrv,'.',BUFSIZ);
+    memset(msgSrv,'.',BUFSIZ);//nettoyage buffer
     verifLecture = read(sock,msgSrv,strlen(msgSrv));
     
     if(verifLecture <= ERREUR)
