@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
                 if(pasv == 1)
                     cmd_ls(ip,cmdtmp,sock);
                 else
-                    cmd_ls_pasv(ip,sock);
+                    cmd_ls_activ(ip,sock);
                 envoieMessage = 0;
                 break;
             case LLS:
@@ -265,14 +265,14 @@ int main(int argc, char *argv[])
                 if(pasv == 1)
                     cmd_get(ip,listeArgumentsCommande, sock);
                 else
-                    cmd_get_pasv(ip,listeArgumentsCommande,sock);
+                    cmd_get_activ(ip,listeArgumentsCommande,sock);
                 envoieMessage = 0;
                 break;
             case PUT:
                 if(pasv == 1)
                     cmd_put(ip, listeArgumentsCommande, sock);
                 else
-                    cmd_put_pasv(ip,listeArgumentsCommande,sock);
+                    cmd_put_activ(ip,listeArgumentsCommande,sock);
                 envoieMessage = 0;
                 break;
             case RM:

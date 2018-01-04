@@ -31,7 +31,7 @@ void cmd_lls(struct listeArgument listeArg);
 void cmd_get(char* ip, struct listeArgument listeArg, int sock);
 void cmd_help();
 void cmd_put(char* ip, struct listeArgument listeArg, int sock);
-void cmd_ls_pasv(char* iptmp, int sock);
-void cmd_get_pasv(char* iptmp, struct listeArgument listeArg, int sock);
-void cmd_put_pasv(char* iptmp, struct listeArgument listeArg, int sock);
+void cmd_ls_activ(char* iptmp, int sock);
+void cmd_get_activ(char* iptmp, struct listeArgument listeArg, int sock);
+void cmd_put_activ(char* iptmp, struct listeArgument listeArg, int sock);
 #endif
